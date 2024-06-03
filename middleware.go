@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-
+	
 	"github.com/go-kit/kit/endpoint"
+	"github.com/renevo/rpc"
 )
 
 // HTTPMiddleware returns a Middleware that injects an OpenTracing Span found in
@@ -38,6 +39,14 @@ func HTTPMiddleware(operationName string, next http.Handler) http.Handler {
 		// next middleware or actual request handler
 		next.ServeHTTP(w, req)
 	})
+}
+
+func RpcMiddleware(operationName string, next rpc.MiddlewareHandler)  rpc.MiddlewareHandler {
+	return func(ctx context.Context, rw rpc.ResponseWriter, req *rpc.Request) {
+		span, ctx := CreateSpan(ctx, operationName, nil)
+		defer span.Finish()
+		next(ctx, rw, req)
+	}		
 }
 
 // GotKitEndpointMiddleWare returns a gokit.Middleware which change the behavior of a gokit.endpoint
